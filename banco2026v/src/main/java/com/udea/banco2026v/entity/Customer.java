@@ -35,8 +35,6 @@ public class Customer {
     * }  
     * 
     * */
-    
-    
     @JsonCreator
     public Customer(@JsonProperty("id") Long id,
                     @JsonProperty("accountNumber") String accountNumber, 

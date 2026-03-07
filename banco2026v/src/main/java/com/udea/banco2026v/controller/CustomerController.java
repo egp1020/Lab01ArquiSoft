@@ -2,6 +2,8 @@ package com.udea.banco2026v.controller;
 
 import com.udea.banco2026v.dto.CustomerDTO;
 import com.udea.banco2026v.service.CustomerService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +39,20 @@ public class CustomerController {
         }
 
         return ResponseEntity.ok(customerFacade.createCustomer(customerDTO));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CustomerDTO> updateCustomer(
+            @PathVariable @Positive Long id,
+            @Valid @RequestBody CustomerDTO customerDTO
+    ) {
+        return ResponseEntity.ok(customerFacade.updateCustomer(id, customerDTO));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCustomer(@PathVariable @Positive Long id){
+        customerFacade.deleteCustomer(id);
+        return ResponseEntity.noContent().build();
     }
 
 }
