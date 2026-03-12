@@ -495,3 +495,22 @@ small {
 .account-hint--loading { color: var(--color-muted, #888); }
 .account-hint--found   { color: var(--color-success, #22c55e); font-weight: 500; }
 .account-hint--error   { color: var(--color-error,   #ef4444); }
+
+.table-count {
+  font-size: 0.8rem;
+  color: var(--color-muted, #888);
+  margin: 6px 0 10px;
+}
+
+.table-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-muted, #888);
+  font-style: italic;
+}
+
+.row--deleting {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
