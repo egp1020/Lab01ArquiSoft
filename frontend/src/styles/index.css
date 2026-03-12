@@ -393,3 +393,18 @@ small {
     flex-direction: column;
   }
 }
+
+/* Feedback del titular */
+.account-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  margin-top: 4px;
+  min-height: 1.2em;       /* evita layout shift al aparecer */
+  transition: color 0.15s;
+}
+
+.account-hint--loading { color: var(--color-muted, #888); }
+.account-hint--found   { color: var(--color-success, #22c55e); font-weight: 500; }
+.account-hint--error   { color: var(--color-error,   #ef4444); }

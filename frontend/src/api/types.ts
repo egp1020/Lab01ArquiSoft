@@ -28,12 +28,10 @@ export type Transaction = {
   receiverAccountNumber: string;
   amount: number | string;
   timestamp: string;
-  idempotencyKey?: string;
 };
 
 export type CreateTransferInput = {
   senderAccountNumber: string;
   receiverAccountNumber: string;
   amount: number;
-  idempotencyKey: string;
 };

@@ -8,9 +8,13 @@ import com.udea.banco2026v.repository.CustomerRepository;
 import com.udea.banco2026v.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+
 @Service
 public class TransactionService {
 
@@ -20,18 +24,20 @@ public class TransactionService {
     @Autowired
     private CustomerRepository customerRepository; // Para validar cuentas
 
+    @Transactional
     public TransactionDTO transferMoney(TransactionDTO transactionDTO) {
-        // Validar que los números de cuenta no sean nulos
-        if (transactionDTO.getSenderAccountNumber() == null || transactionDTO.getReceiverAccountNumber() == null) {
-            throw new IllegalArgumentException("Los números de cuenta del remitente y receptor son obligatorios.");
-        }
+        validateTransferRequest(transactionDTO);
+
+        String senderAccountNumber = transactionDTO.getSenderAccountNumber().trim();
+        String receiverAccountNumber = transactionDTO.getReceiverAccountNumber().trim();
 
         // Buscar los clientes por número de cuenta
-        Customer sender = customerRepository.findByAccountNumber(transactionDTO.getSenderAccountNumber())
+        Customer sender = customerRepository.findByAccountNumber(senderAccountNumber)
                 .orElseThrow(() -> new IllegalArgumentException("La cuenta del remitente no existe."));
-        Customer receiver = customerRepository.findByAccountNumber(transactionDTO.getReceiverAccountNumber())
+        Customer receiver = customerRepository.findByAccountNumber(receiverAccountNumber)
                 .orElseThrow(() -> new IllegalArgumentException("La cuenta del receptor no existe."));
 //    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender not found"));
+
         // Validar que el remitente tenga saldo suficiente
         if (sender.getBalance() < transactionDTO.getAmount()) {
             throw new IllegalArgumentException("Saldo insuficiente en la cuenta del remitente.");
@@ -52,7 +58,7 @@ public class TransactionService {
         transaction.setSenderAccountNumber(sender.getAccountNumber());
         transaction.setReceiverAccountNumber(receiver.getAccountNumber());
         transaction.setAmount(transactionDTO.getAmount());
-        transaction.setTimestamp(transactionDTO.getTimestamp());
+        transaction.setTimestamp(LocalDateTime.now());
 
         transaction = transactionRepository.save(transaction);
 
@@ -78,5 +84,27 @@ public class TransactionService {
             dto.setTimestamp(transaction.getTimestamp());
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    private void validateTransferRequest(TransactionDTO transactionDTO) {
+        if (transactionDTO == null) {
+            throw new IllegalArgumentException("La solicitud de transferencia es obligatoria.");
+        }
+
+        String senderAccountNumber = transactionDTO.getSenderAccountNumber();
+        String receiverAccountNumber = transactionDTO.getReceiverAccountNumber();
+
+        if (senderAccountNumber == null || senderAccountNumber.trim().isEmpty()
+                || receiverAccountNumber == null || receiverAccountNumber.trim().isEmpty()) {
+            throw new IllegalArgumentException("Los números de cuenta del remitente y receptor son obligatorios.");
+        }
+
+        if (senderAccountNumber.trim().equals(receiverAccountNumber.trim())) {
+            throw new IllegalArgumentException("La cuenta de origen y destino no pueden ser la misma.");
+        }
+
+        if (transactionDTO.getAmount() == null || transactionDTO.getAmount() <= 0) {
+            throw new IllegalArgumentException("El monto debe ser mayor que cero.");
+        }
     }
 }
