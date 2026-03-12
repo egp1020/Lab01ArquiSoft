@@ -2,11 +2,39 @@ import { http } from './http';
 import type { Customer, UpdateCustomerInput } from "./types";
 
 // fetchCustomers
-export async function fetchCustomers() {
+export async function fetchCustomers() : Promise<Customer[]> {
+    const response = await fetch("/api/customers", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
+
+    
+
+    if (!response.ok) {
+        throw new Error("Error al obtener los clientes");
+    }
+
+    const data: Customer[] = await response.json();
+    return data;
 }
 
 // fetchCustomerById
-export async function fetchCustomerById() {
+export async function fetchCustomerById(id: number): Promise<Customer> {
+    const response = await fetch(`/api/customers/${id}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error("Error al obtener el cliente");
+    }
+
+    const data: Customer = await response.json();
+    return data;
 }
 
 // fetchCustomerByAccount

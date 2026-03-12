@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { deleteCustomer, updateCustomer } from '../../api/customers';
+import { deleteCustomer, updateCustomer, fetchCustomers, fetchCustomerById } from '../../api/customers';
 import { UpdateCustomerInput, Customer } from '../../api/types'
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { formatCurrency } from '../../lib/format';
@@ -18,35 +18,24 @@ const schema = z.object({
 
 type CustomerForm = z.infer<typeof schema>;
 
-// MOCK CUSTOMER
-const mockCustomers: Customer[] = [
-    {
-        id: 1,
-        accountNumber: "123456",
-        firstName: "Juan",
-        lastName: "Pérez",
-        balance: 1500,
-    },
-    {
-        id: 2,
-        accountNumber: "654321",
-        firstName: "Ana",
-        lastName: "García",
-        balance: 2300,
-    },
-    {
-        id: 3,
-        accountNumber: "999888",
-        firstName: "Carlos",
-        lastName: "López",
-        balance: 500,
-    },
-];
-
 export function CustomersPage() {
-    const [customers, ] = useState<Customer[]>(mockCustomers);
+
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+    const [cedula, setCedula] = useState('');
+    const [searchId, setSearchId] = useState<number | null>(null);
     const queryClient = useQueryClient();
+
+    const { data: customers = [], isLoading, error } = useQuery({
+        queryKey: ['customers'],
+        queryFn: fetchCustomers
+    });
+
+    // consulta por cédula
+    const { data: customerById } = useQuery({
+        queryKey: ['customer', searchId],
+        queryFn: () => fetchCustomerById(searchId!),
+        enabled: searchId !== null
+    });
 
     const form = useForm<CustomerForm>({
         resolver: zodResolver(schema),
@@ -101,12 +90,52 @@ export function CustomersPage() {
             deleteMutation.mutate(customer.id);
         }
     };
+
+    if (isLoading) {
+        return <p>Cargando clientes...</p>;
+    }
+
+    if (error) {
+        return <ErrorNotice error={error} />;
+    }
+
+    // si se buscó por cédula mostramos solo ese cliente
+    const customersToShow = customerById ? [customerById] : customers;
+
     return (
         <section className="panel">
             <header className="panel__header">
                 <h2>Consultar Clientes</h2>
                 <p>Consulta, edición y eliminación de datos de clientes.</p>
             </header>
+
+            <div className="customer-search">
+  <input
+    className="customer-search__input"
+    type="number"
+    placeholder="Buscar cliente por Id..."
+    value={cedula}
+    onChange={(e) => setCedula(e.target.value)}
+  />
+
+  <button
+    className="btn btn--tiny"
+    onClick={() => setSearchId(Number(cedula))}
+    disabled={!cedula}
+  >
+    🔎 Buscar
+  </button>
+
+  <button
+    className="btn btn--tiny btn--ghost"
+    onClick={() => {
+      setSearchId(null);
+      setCedula('');
+    }}
+  >
+    Ver todos
+  </button>
+</div>
 
             {updateMutation.error && <ErrorNotice error={updateMutation.error} />}
             {deleteMutation.error && <ErrorNotice error={deleteMutation.error} />}
@@ -124,7 +153,7 @@ export function CustomersPage() {
                         </tr>
                         </thead>
                         <tbody>
-                        {customers.map((customer) => (
+                        {customersToShow.map((customer) => (
                             <tr key={customer.id}>
                                 <td>{customer.id}</td>
                                 <td>{customer.accountNumber}</td>
@@ -207,9 +236,6 @@ export function CustomersPage() {
                     </div>
                 </div>
             )}
-          <ul>
-            <li>TODO: conectar listado de clientes.</li>
-          </ul>
         </section>
     );
 }
