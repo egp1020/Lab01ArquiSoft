@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { ApiError } from './types';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 export class HttpError extends Error {
   readonly status: number;
@@ -24,15 +24,21 @@ export const api = axios.create({
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-      const status = error.response?.status ?? 500;
-      const payload = error.response?.data as ApiError | undefined;
-
+      const status  = error.response?.status ?? 500;
+      const data    = error.response?.data;
       const message =
-          payload?.message ??
+          (typeof data === "object" && data !== null && "message" in data
+              ? (data as ApiError).message
+              : null) ??
+          (typeof data === "string" && data.trim() !== "" ? data : null) ??
           error.message ??
-          "Unexpected request error"
+          "Error inesperado";
 
-      return Promise.reject(new HttpError(status, message, payload))
+      const payload = typeof data === "object" && data !== null
+          ? (data as ApiError)
+          : undefined;
+
+      return Promise.reject(new HttpError(status, message, payload));
     }
 );
 

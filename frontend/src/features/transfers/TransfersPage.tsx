@@ -1,186 +1,226 @@
-import {useState} from "react";
+import { useRef, useState } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { createTransfer } from "../../api/transactions";
+import { fetchCustomerByAccount } from "../../api/customers";
+import { formatCurrency } from "../../lib/format";
 
-export function TransfersPage() {
-
-  const [fromAccount, setFromAccount] = useState("");
-  const [toAccount, setToAccount] = useState("");
-  const [amount, setAmount] = useState("");
-
-  const [fromCustomer, setFromCustomer] = useState("");
-  const [toCustomer, setToCustomer] = useState("");
-  const [message, setMessage] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  //Validacion 1 todos los campos estan llens
-  if (!fromAccount || !toAccount || !amount) {
-    setMessage("Todos los campos son obligatorios");
-    return;
-  }
-
-  // VALIDACION 2: misma cuenta
-  if (fromAccount === toAccount) {
-    setMessage("No puedes transferir a la misma cuenta");
-    return;
-  }
-
-  // VALIDACION 3: monto mayor que 0  
-  if (Number(amount) <= 0) {
-    setMessage("El monto debe ser mayor que cero");
-    return;
-  }
- 
-  
-  try {
-
-    const response = await fetch(
-      "http://localhost:8080/transactions/transfer",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          senderAccountNumber: fromAccount,
-          receiverAccountNumber: toAccount,
-          amount: Number(amount)
-        })
-      }
+// ─── Schema ────────────────────────────────────────────────────────────────────
+const schema = z
+    .object({
+      senderAccountNumber: z.string().min(6, "Mínimo 6 dígitos").max(20, "Máximo 20 dígitos"),
+      receiverAccountNumber: z.string().min(6, "Mínimo 6 dígitos").max(20, "Máximo 20 dígitos"),
+      amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
+    })
+    .refine(
+        (data) => data.senderAccountNumber !== data.receiverAccountNumber,
+        { message: "No puedes transferir a la misma cuenta", path: ["receiverAccountNumber"] }
     );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      setMessage(errorText);
+type TransferForm = z.infer<typeof schema>;
+
+// ─── Tipos del lookup ──────────────────────────────────────────────────────────
+type LookupStatus = "idle" | "loading" | "found" | "error";
+
+interface AccountLookup {
+  status: LookupStatus;
+  name: string;
+}
+
+const IDLE: AccountLookup = { status: "idle", name: "" };
+
+// ─── Sub-componente: feedback del titular ──────────────────────────────────────
+function AccountHint({ lookup }: { lookup: AccountLookup }) {
+  if (lookup.status === "idle") return null;
+
+  const variants: Record<Exclude<LookupStatus, "idle">, { icon: string; text: string; cls: string }> = {
+    loading: { icon: "⏳", text: "Buscando…",            cls: "account-hint--loading" },
+    found:   { icon: "✓",  text: lookup.name,            cls: "account-hint--found"   },
+    error:   { icon: "✗",  text: "Cuenta no encontrada", cls: "account-hint--error"   },
+  };
+
+  const { icon, text, cls } = variants[lookup.status];
+
+  return (
+      <span
+          className={`account-hint ${cls}`}
+          role="status"
+          aria-live="polite"
+          aria-label={lookup.status === "found" ? `Titular: ${lookup.name}` : text}
+      >
+      <span aria-hidden="true">{icon}</span> {text}
+    </span>
+  );
+}
+
+// ─── Componente principal ──────────────────────────────────────────────────────
+export function TransfersPage() {
+  const [fromLookup, setFromLookup] = useState<AccountLookup>(IDLE);
+  const [toLookup,   setToLookup]   = useState<AccountLookup>(IDLE);
+
+  // Refs para debounce — no causan re-render
+  const fromTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<TransferForm>({
+    resolver: zodResolver(schema),
+    defaultValues: { senderAccountNumber: "", receiverAccountNumber: "", amount: 0 },
+  });
+
+  const watchedAmount = watch("amount");
+
+  const mutation = useMutation({
+    mutationFn: createTransfer,
+    onSuccess: () => {
+      reset();
+      setFromLookup(IDLE);
+      setToLookup(IDLE);
+    },
+  });
+
+  const onSubmit = handleSubmit((values) => mutation.mutate(values));
+
+  // ─── Lookup con debounce 400ms ─────────────────────────────────────────────
+  const checkAccount = (accountNumber: string, type: "from" | "to") => {
+    const setter   = type === "from" ? setFromLookup : setToLookup;
+    const timerRef = type === "from" ? fromTimer     : toTimer;
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    if (accountNumber.length < 6) {
+      setter(IDLE);
       return;
     }
 
-    setMessage("Transferencia realizada correctamente");
+    setter({ status: "loading", name: "" });
 
-    // limpiar formulario
-    setFromAccount("");
-    setToAccount("");
-    setAmount("");
-    setFromCustomer("");
-    setToCustomer("");
-
-  } catch (error) {
-    setMessage("Error conectando con el servidor");
-  }
-};
-
-  const checkAccount = async (accountNumber: string, type: "from" | "to") => {
-
-    if (!accountNumber) return;
-
-    try {
-
-      const response = await fetch(
-        `http://localhost:8080/customers/account/${accountNumber}`
-      );
-
-      if (!response.ok) {
-        if (type === "from") setFromCustomer("Cuenta no encontrada");
-        else setToCustomer("Cuenta no encontrada");
-        return;
+    timerRef.current = setTimeout(async () => {
+      try {
+        const customer = await fetchCustomerByAccount(accountNumber);
+        setter({ status: "found", name: `${customer.firstName} ${customer.lastName}` });
+      } catch {
+        setter({ status: "error", name: "" });
       }
-
-      const data = await response.json();
-      const fullName = data.firstName + " " + data.lastName;
-
-      if (type === "from") setFromCustomer(fullName);
-      else setToCustomer(fullName);
-
-    } catch (error) {
-      setMessage("Error conectando con el servidor");
-    }
-
+    }, 400);
   };
 
+  // ─── Factory handler ───────────────────────────────────────────────────────
+  const makeHandler = (
+      rhfOnChange: React.ChangeEventHandler<HTMLInputElement>,
+      type: "from" | "to"
+  ) =>
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        e.target.value = e.target.value.replace(/\D/g, "");
+        rhfOnChange(e);
+        checkAccount(e.target.value, type);
+      };
+
+  const senderReg   = register("senderAccountNumber");
+  const receiverReg = register("receiverAccountNumber");
+  const isPending   = mutation.isPending || isSubmitting;
 
   return (
-    <section className="panel">
+      <section className="panel">
+        <header className="panel__header">
+          <h2>Realizar Transferencia</h2>
+          <p>Aquí puedes transferir dinero a otra persona.</p>
+        </header>
 
-      <header className="panel__header">
-        <h2>Realizar Transferencia</h2>
-        <p>Módulo base implementar el flujo transaccional.</p>
-      </header>
+        <form className="form-grid" onSubmit={onSubmit} noValidate>
 
-      <form className="form-grid" onSubmit={handleSubmit}>
+          <label>
+            Número de cuenta origen
+            <input
+                {...senderReg}
+                inputMode="numeric"
+                autoComplete="off"
+                aria-invalid={!!errors.senderAccountNumber}
+                aria-describedby="sender-hint sender-error"
+                onChange={makeHandler(senderReg.onChange, "from")}
+            />
+            <AccountHint lookup={fromLookup} />
+            {errors.senderAccountNumber && (
+                <small id="sender-error" className="error" role="alert">
+                  {errors.senderAccountNumber.message}
+                </small>
+            )}
+          </label>
 
-        <label>
-          Número de cuenta origen
+          <label>
+            Número de cuenta destino
+            <input
+                {...receiverReg}
+                inputMode="numeric"
+                autoComplete="off"
+                aria-invalid={!!errors.receiverAccountNumber}
+                aria-describedby="receiver-hint receiver-error"
+                onChange={makeHandler(receiverReg.onChange, "to")}
+            />
+            <AccountHint lookup={toLookup} />
+            {errors.receiverAccountNumber && (
+                <small id="receiver-error" className="error" role="alert">
+                  {errors.receiverAccountNumber.message}
+                </small>
+            )}
+          </label>
 
-          <input
-            type="text"
-            value={fromAccount}
-            inputMode="numeric"
-            onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, "");
-              setFromAccount(value);
-              checkAccount(value, "from");
-            }}
-          />
+          <label>
+            Monto
+            <input
+                {...register("amount")}
+                type="number"
+                min="0"
+                step="0.01"
+                aria-invalid={!!errors.amount}
+                aria-describedby="amount-preview amount-error"
+            />
+            {watchedAmount > 0 && !errors.amount && (
+                <small id="amount-preview" className="account-hint account-hint--found">
+                  {formatCurrency(watchedAmount)}
+                </small>
+            )}
+            {errors.amount && (
+                <small id="amount-error" className="error" role="alert">
+                  {errors.amount.message}
+                </small>
+            )}
+          </label>
 
-          {fromCustomer && (
-            <small>Titular: {fromCustomer}</small>
-          )}
+          <div className="row-actions">
+            <button
+                type="submit"
+                className="btn"
+                disabled={isPending}
+                aria-busy={isPending}
+            >
+              {isPending ? "Transfiriendo…" : "Transferir"}
+            </button>
+          </div>
 
-        </label>
+        </form>
 
+        {mutation.isSuccess && (
+            <p className="notice notice--success" role="status" aria-live="polite" style={{ marginTop: "10px" }}>
+              ✓ Transferencia realizada correctamente
+            </p>
+        )}
 
-        <label>
-          Número de cuenta destino
+        {mutation.isError && (
+            <p className="notice notice--error" role="alert" style={{ marginTop: "10px" }}>
+              {mutation.error instanceof Error
+                  ? mutation.error.message
+                  : "Error al realizar la transferencia"}
+            </p>
+        )}
 
-          <input
-            type="text"
-            value={toAccount}
-            inputMode="numeric"
-            onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, "");
-              setToAccount(value);
-              checkAccount(value, "to");
-            }}
-          />
-
-          {toCustomer && (
-            <small>Titular: {toCustomer}</small>
-          )}
-
-        </label>
-
-
-        <label>
-          Monto
-
-          <input
-            type="number"
-            value={amount}
-            min="0"
-            step="0.01"
-            onChange={(e) => setAmount(e.target.value)}
-          />
-
-        </label>
-
-
-        <div className="row-actions">
-          <button
-              type="submit"
-              className="btn"
-              disabled={Number(amount) <= 0}
-          >
-            Transferir
-          </button>
-        </div>
-
-      </form>
-
-      {message && (
-        <p style={{marginTop:"10px"}}>
-          {message}
-        </p>
-      )}
-
-    </section>
+      </section>
   );
 }
