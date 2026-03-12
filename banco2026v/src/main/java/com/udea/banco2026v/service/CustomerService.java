@@ -33,6 +33,14 @@ public class CustomerService {
                 .orElseThrow(()-> new RuntimeException("Customer not found"));
     }
 
+    //Servicio para encontrar el cliente a traves de su numero de cuenta
+    public CustomerDTO getCustomerByAccountNumber(String accountNumber) {
+    Customer customer = customerRepository.findByAccountNumber(accountNumber)
+            .orElseThrow(() -> new NotFoundException("Account not found"));
+    return customerMapper.toDTO(customer);
+    }
+
+
     public CustomerDTO createCustomer(CustomerDTO customerDTO) {
         Customer customer = customerMapper.toEntity(customerDTO);
         return customerMapper.toDTO(customerRepository.save(customer));
@@ -73,5 +81,5 @@ public class CustomerService {
             }
         });
     }
-
+    
 }

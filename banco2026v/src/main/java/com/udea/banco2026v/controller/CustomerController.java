@@ -55,4 +55,12 @@ public class CustomerController {
         return ResponseEntity.noContent().build();
     }
 
+    //Metodo nuevo para obtener en numero de cuenta
+    @GetMapping("/account/{accountNumber}")
+        public ResponseEntity<CustomerDTO> getCustomerByAccountNumber(
+        @PathVariable String accountNumber) {
+
+        CustomerDTO customer = customerFacade.getCustomerByAccountNumber(accountNumber);
+        return ResponseEntity.ok(customer);
+}
 }
