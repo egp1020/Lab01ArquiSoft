@@ -2,11 +2,13 @@ import { http } from './http';
 import type { Customer, UpdateCustomerInput } from "./types";
 
 // fetchCustomers
-export async function fetchCustomers() {
+export async function fetchCustomers() : Promise<Customer[]> {
+    return http.get<Customer[]>("/customers");
 }
 
 // fetchCustomerById
-export async function fetchCustomerById() {
+export async function fetchCustomerById(id: number): Promise<Customer> {
+    return http.get<Customer>(`/customers/${id}`);
 }
 
 // fetchCustomerByAccount

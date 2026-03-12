@@ -149,6 +149,93 @@ tbody tr:hover {
   background: #f6faef;
 }
 
+/*Busqueda */
+
+/* ===== BUSCADOR DE CLIENTES ===== */
+
+.customer-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+/* Campo de búsqueda */
+
+.customer-search__input {
+  flex: 1;
+  max-width: 340px;
+  padding: 10px 12px;
+  border: 1px solid #cad7c2;
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  color: #1e2f20;
+  transition: border 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Focus consistente con el accent del sistema */
+
+.customer-search__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(23, 111, 143, 0.15);
+}
+
+/* Placeholder más suave */
+
+.customer-search__input::placeholder {
+  color: #7a8f7f;
+}
+
+/* Ajuste visual para botones dentro del buscador */
+
+.customer-search .btn--tiny {
+  min-height: 36px;
+}
+
+/* Botón buscar mantiene el accent principal */
+
+.customer-search .btn--tiny:first-of-type {
+  background: linear-gradient(120deg, var(--accent), #176f8f);
+  color: #fff;
+}
+
+/* Botón ver todos más neutro */
+
+.customer-search .btn--ghost {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--bg-ink);
+}
+
+/* Hover sutil consistente con el resto del sistema */
+
+.customer-search .btn--ghost:hover {
+  filter: brightness(0.97);
+}
+
+/* Responsive */
+
+@media (max-width: 640px) {
+
+  .customer-search {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .customer-search__input {
+    max-width: 100%;
+  }
+
+  .customer-search .btn--tiny {
+    width: 100%;
+  }
+
+}
+/*fin de busqueda*/
+
 .btn {
   border: none;
   background: linear-gradient(120deg, var(--accent), #176f8f);
@@ -408,3 +495,22 @@ small {
 .account-hint--loading { color: var(--color-muted, #888); }
 .account-hint--found   { color: var(--color-success, #22c55e); font-weight: 500; }
 .account-hint--error   { color: var(--color-error,   #ef4444); }
+
+.table-count {
+  font-size: 0.8rem;
+  color: var(--color-muted, #888);
+  margin: 6px 0 10px;
+}
+
+.table-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-muted, #888);
+  font-style: italic;
+}
+
+.row--deleting {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
