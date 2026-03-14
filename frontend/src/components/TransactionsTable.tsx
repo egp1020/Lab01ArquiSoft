@@ -1,4 +1,4 @@
-import { formatCurrency } from "../lib/format";
+import { formatCurrency, formatDate } from "../lib/format";
 import type { Transaction } from "../api/types";
 
 type Props = {
@@ -38,7 +38,7 @@ export function TransactionsTable({ transactions, searchAccount }: Props) {
                 <td>{tx.receiverAccountNumber}</td>
                 <td>{formatCurrency(tx.amount)}</td>
                 <td>{tipo}</td>
-                <td>{tx.timestamp}</td>
+                <td>{formatDate(tx.timestamp)}</td>
               </tr>
             );
           })}
