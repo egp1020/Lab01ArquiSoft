@@ -1,0 +1,51 @@
+import { formatCurrency } from "../lib/format";
+import type { Transaction } from "../api/types";
+
+type Props = {
+  transactions: Transaction[];
+  searchAccount: string | null;
+};
+
+export function TransactionsTable({ transactions, searchAccount }: Props) {
+
+  return (
+    <div className="table-wrap">
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cuenta Origen</th>
+            <th>Cuenta Destino</th>
+            <th>Monto</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {transactions.map((tx) => {
+
+            const tipo =
+              tx.senderAccountNumber === searchAccount
+                ? "EGRESO"
+                : "INGRESO";
+
+            return (
+              <tr key={tx.id}>
+                <td>{tx.id}</td>
+                <td>{tx.senderAccountNumber}</td>
+                <td>{tx.receiverAccountNumber}</td>
+                <td>{formatCurrency(tx.amount)}</td>
+                <td>{tipo}</td>
+                <td>{tx.timestamp}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+
+      </table>
+
+    </div>
+  );
+}

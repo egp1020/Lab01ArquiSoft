@@ -5,6 +5,6 @@ export async function createTransfer(input: CreateTransferInput): Promise<Transa
     return http.post<Transaction>('/transactions', input);
 }
 
-export async function fetchTransactionsByAccount(accountNumber: string): Promise<Transaction> {
-    return http.get<Transaction>(`/transactions/${accountNumber}`);
+export async function fetchTransactionsByAccount(accountNumber: string): Promise<Transaction[]> {
+    return http.get<Transaction[]>(`/transactions/${accountNumber}`);
 }
