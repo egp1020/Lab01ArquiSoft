@@ -7,8 +7,9 @@ export function formatCurrency(value: number | string): string {
 }
 
 export function formatDate(value: string): string {
+  const normalized = value.endsWith('Z') ? value : value + 'Z';
   return new Intl.DateTimeFormat('es-CO', {
     dateStyle: 'short',
     timeStyle: 'short',
-  }).format(new Date(value));
+  }).format(new Date(normalized));
 }

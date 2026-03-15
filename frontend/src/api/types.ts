@@ -12,7 +12,7 @@ export type Customer = {
   accountNumber: string;
   firstName: string;
   lastName: string;
-  balance: number | string;
+  balance: number;
 };
 
 export type UpdateCustomerInput = {
@@ -26,12 +26,14 @@ export type Transaction = {
   id: number;
   senderAccountNumber: string;
   receiverAccountNumber: string;
-  amount: number | string;
+  amount: number;
   timestamp: string;
+  idempotencyKey?: string;
 };
 
 export type CreateTransferInput = {
   senderAccountNumber: string;
   receiverAccountNumber: string;
   amount: number;
+  idempotencyKey: string;
 };

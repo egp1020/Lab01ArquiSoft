@@ -6,6 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createTransfer } from "../../api/transactions";
 import { fetchCustomerByAccount } from "../../api/customers";
 import { formatCurrency } from "../../lib/format";
+import {ErrorNotice} from "../../components/ErrorNotice";
 
 // ─── Schema ────────────────────────────────────────────────────────────────────
 const schema = z
@@ -86,7 +87,12 @@ export function TransfersPage() {
     },
   });
 
-  const onSubmit = handleSubmit((values) => mutation.mutate(values));
+  const onSubmit = handleSubmit((values) =>
+      mutation.mutate({
+        ...values,
+        idempotencyKey: crypto.randomUUID()
+      })
+  );
 
   // ─── Lookup con debounce 400ms ─────────────────────────────────────────────
   const checkAccount = (accountNumber: string, type: "from" | "to") => {
@@ -115,12 +121,15 @@ export function TransfersPage() {
   // ─── Factory handler ───────────────────────────────────────────────────────
   const makeHandler = (
       rhfOnChange: React.ChangeEventHandler<HTMLInputElement>,
-      type: "from" | "to"
+      type: 'from' | 'to'
   ) =>
       (e: React.ChangeEvent<HTMLInputElement>) => {
-        e.target.value = e.target.value.replace(/\D/g, "");
-        rhfOnChange(e);
-        checkAccount(e.target.value, type);
+        const cleaned = e.target.value.replace(/\D/g, '');
+        const syntheticEvent = Object.assign({}, e, {
+          target: Object.assign({}, e.target, { value: cleaned }),
+        });
+        rhfOnChange(syntheticEvent as React.ChangeEvent<HTMLInputElement>);
+        checkAccount(cleaned, type);
       };
 
   const senderReg   = register("senderAccountNumber");
@@ -213,13 +222,7 @@ export function TransfersPage() {
             </p>
         )}
 
-        {mutation.isError && (
-            <p className="notice notice--error" role="alert" style={{ marginTop: "10px" }}>
-              {mutation.error instanceof Error
-                  ? mutation.error.message
-                  : "Error al realizar la transferencia"}
-            </p>
-        )}
+        {mutation.isError && <ErrorNotice error={mutation.error} />}
 
       </section>
   );
