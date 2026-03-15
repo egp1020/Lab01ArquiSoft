@@ -29,6 +29,14 @@ public class CustomerController {
         return ResponseEntity.ok(customerFacade.getCustomerById(id));
     }
 
+    @GetMapping("/account/{accountNumber}")
+    public ResponseEntity<CustomerDTO> getCustomerByAccountNumber(
+            @PathVariable String accountNumber
+    ) {
+        CustomerDTO customer = customerFacade.getCustomerByAccountNumber(accountNumber);
+        return ResponseEntity.ok(customer);
+    }
+
     @PostMapping
     public ResponseEntity<CustomerDTO> createCustomer(
             @Valid @RequestBody CustomerDTO customerDTO
@@ -48,13 +56,5 @@ public class CustomerController {
     public ResponseEntity<Void> deleteCustomer(@PathVariable @Positive Long id){
         customerFacade.deleteCustomer(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/account/{accountNumber}")
-    public ResponseEntity<CustomerDTO> getCustomerByAccountNumber(
-            @PathVariable String accountNumber
-    ) {
-        CustomerDTO customer = customerFacade.getCustomerByAccountNumber(accountNumber);
-        return ResponseEntity.ok(customer);
     }
 }
