@@ -534,20 +534,6 @@ small {
   color: #991b1b;
 }
 
-/* Contenedor genérico para avisos (Info, Error, etc.) */
-.notice {
-  padding: 12px 16px;
-  border-radius: 6px;
-  margin: 16px 0;
-  font-size: 14px;
-}
-
-.notice--info {
-  background-color: #eff6ff;
-  color: #1e40af;
-  border-left: 4px solid #3b82f6;
-}
-
 /* Animación de carga para el texto de "Cargando..." */
 .skeleton {
   opacity: 0.6;

@@ -28,7 +28,7 @@ export function TransactionsTable({ transactions, searchAccount }: Props) {
       );
     });
   }, [transactions, searchAccount]);
-q
+
   return (
     <div className="table-wrap">
       <table>

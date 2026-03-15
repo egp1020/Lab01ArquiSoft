@@ -6,7 +6,6 @@ import { HistorySearch } from "../../components/HistorySearch";
 import { TransactionsTable } from "../../components/TransactionsTable";
 
 export function HistoryPage() {
-
   const [account, setAccount] = useState("");
   const [searchAccount, setSearchAccount] = useState<string | null>(null);
   const [inputError, setInputError] = useState<string | null>(null);
@@ -17,9 +16,11 @@ export function HistoryPage() {
     enabled: !!searchAccount
   });
 
+  const hasResults = transactions.length > 0;
+  const showEmptyState = !isLoading && searchAccount && !hasResults;
+
   return (
     <section className="panel">
-
       <header className="panel__header">
         <h2>Histórico por Cliente</h2>
         <p>Consulta de movimientos asociados a una cuenta.</p>
@@ -40,19 +41,18 @@ export function HistoryPage() {
 
       {error && <ErrorNotice error={error} />}
 
-      {!isLoading && searchAccount && transactions.length === 0 && (
-        <p className="muted">
-          No se encontraron movimientos para esta cuenta.
+      {showEmptyState && (
+        <p className="notice notice--info">
+          No se encontraron movimientos para la cuenta <strong>{searchAccount}</strong>.
         </p>
       )}
 
-      {transactions.length > 0 && (
+      {hasResults && (
         <TransactionsTable
-          transactions={transactions}
-          searchAccount={searchAccount}
+            transactions={transactions}
+            searchAccount={searchAccount}
         />
       )}
-
     </section>
   );
 }
