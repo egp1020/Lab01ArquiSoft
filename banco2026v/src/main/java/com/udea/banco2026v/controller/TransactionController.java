@@ -21,8 +21,7 @@ public class TransactionController {
     public ResponseEntity<TransactionDTO> transferMoney(
             @Valid @RequestBody TransferRequestDTO transferRequestDTO
     ) {
-        TransactionDTO savedTransaction = transactionService.transferMoney(transferRequestDTO);
-        return ResponseEntity.ok(savedTransaction);
+        return ResponseEntity.ok(transactionService.transferMoney(transferRequestDTO));
     }
 
     @GetMapping("/{accountNumber}")
