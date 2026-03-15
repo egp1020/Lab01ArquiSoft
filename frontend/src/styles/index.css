@@ -514,3 +514,48 @@ small {
   pointer-events: none;
   transition: opacity 0.2s;
 }
+
+/* Estado de error visual en el input */
+.customer-search__input.input--error {
+  border-color: #e53e3e;
+  background-color: #fff5f5;
+}
+
+.badge {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge--ingreso {
+  color: #166534;
+}
+
+.badge--egreso {
+  color: #991b1b;
+}
+
+/* Contenedor genérico para avisos (Info, Error, etc.) */
+.notice {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin: 16px 0;
+  font-size: 14px;
+}
+
+.notice--info {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border-left: 4px solid #3b82f6;
+}
+
+/* Animación de carga para el texto de "Cargando..." */
+.skeleton {
+  opacity: 0.6;
+  animation: pulse-text 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+

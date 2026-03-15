@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { formatCurrency, formatDate } from "../lib/format";
 import type { Transaction } from "../api/types";
 
@@ -8,9 +9,28 @@ type Props = {
 
 export function TransactionsTable({ transactions, searchAccount }: Props) {
 
+  const tableRows = useMemo(() => {
+    return transactions.map((tx) => {
+      const isEgreso = tx.senderAccountNumber === searchAccount;
+      const tipo = isEgreso ? "EGRESO" : "INGRESO";
+
+      return (
+          <tr key={tx.id}>
+            <td>{tx.id}</td>
+            <td>{tx.senderAccountNumber}</td>
+            <td>{tx.receiverAccountNumber}</td>
+            <td>{formatCurrency(tx.amount)}</td>
+            <td className={`badge badge--${tipo.toLowerCase()}`}>
+              {tipo}
+            </td>
+            <td>{formatDate(tx.timestamp)}</td>
+          </tr>
+      );
+    });
+  }, [transactions, searchAccount]);
+q
   return (
     <div className="table-wrap">
-
       <table>
         <thead>
           <tr>
@@ -22,30 +42,10 @@ export function TransactionsTable({ transactions, searchAccount }: Props) {
             <th>Fecha</th>
           </tr>
         </thead>
-
         <tbody>
-          {transactions.map((tx) => {
-
-            const tipo =
-              tx.senderAccountNumber === searchAccount
-                ? "EGRESO"
-                : "INGRESO";
-
-            return (
-              <tr key={tx.id}>
-                <td>{tx.id}</td>
-                <td>{tx.senderAccountNumber}</td>
-                <td>{tx.receiverAccountNumber}</td>
-                <td>{formatCurrency(tx.amount)}</td>
-                <td>{tipo}</td>
-                <td>{formatDate(tx.timestamp)}</td>
-              </tr>
-            );
-          })}
+          {tableRows}
         </tbody>
-
       </table>
-
     </div>
   );
 }
