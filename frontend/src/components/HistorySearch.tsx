@@ -35,9 +35,8 @@ export function HistorySearch({
 
   return (
     <div className="customer-search">
-
       <input
-        className="customer-search__input"
+        className={`customer-search__input ${inputError ? 'input--error' : ''}`}
         placeholder="Número de cuenta"
         value={account}
         inputMode="numeric"
@@ -45,32 +44,14 @@ export function HistorySearch({
 
         onChange={(e) => {
           const value = e.target.value;
-
           if (/^\d*$/.test(value)) {
             setAccount(value);
+            if (inputError) setInputError(null);
           }
         }}
 
         onKeyDown={(e) => {
-
-          const allowedKeys = [
-            "Backspace",
-            "Delete",
-            "ArrowLeft",
-            "ArrowRight",
-            "Tab",
-            "Enter"
-          ];
-
-          if (allowedKeys.includes(e.key)) return;
-
-          if (!/^\d$/.test(e.key)) {
-            e.preventDefault();
-          }
-
-          if (e.key === "Enter") {
-            handleSearch();
-          }
+            if (e.key === "Enter") handleSearch();
         }}
       />
 
@@ -92,9 +73,8 @@ export function HistorySearch({
       )}
 
       {inputError && (
-        <p className="notice notice--error">{inputError}</p>
+        <p role="alert" className="notice notice--error">{inputError}</p>
       )}
-
     </div>
   );
 }
