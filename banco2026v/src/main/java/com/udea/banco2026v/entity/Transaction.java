@@ -6,7 +6,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,6 +29,8 @@ public class Transaction {
     private Double amount;
     @Column(nullable = false)
     private LocalDateTime timestamp = LocalDateTime.now();
+    @Column(name = "idempotency_key", unique = true, nullable = false, length = 36)
+    private String idempotencyKey;
 }
 
 

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -35,6 +36,12 @@ public class TransactionService {
 
     @Transactional
     public TransactionDTO transferMoney(TransferRequestDTO request) {
+        Optional<Transaction> existing =
+                transactionRepository.findByIdempotencyKey(request.getIdempotencyKey());
+        if (existing.isPresent()) {
+            return transactionMapper.toDTO(existing.get());
+        }
+
         String senderAccount = request.getSenderAccountNumber().trim();
         String receiverAccount = request.getReceiverAccountNumber().trim();
 

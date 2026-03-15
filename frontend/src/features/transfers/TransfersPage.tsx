@@ -90,7 +90,7 @@ export function TransfersPage() {
   const onSubmit = handleSubmit((values) =>
       mutation.mutate({
         ...values,
-        idempotencyKey: crypto.randomUUID()
+        idempotencyKey: crypto.randomUUID(),
       })
   );
 

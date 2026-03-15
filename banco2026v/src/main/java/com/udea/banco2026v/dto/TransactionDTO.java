@@ -18,5 +18,6 @@ public class TransactionDTO {
     private String receiverAccountNumber;
     private Double amount;
     private LocalDateTime timestamp;
+    private String idempotencyKey;
 }
 
