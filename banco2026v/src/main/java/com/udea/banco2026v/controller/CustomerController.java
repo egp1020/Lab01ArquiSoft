@@ -19,25 +19,20 @@ public class CustomerController {
         this.customerFacade = customerFacade;
     }
 
-    // ✅ Obtener todos los clientes
     @GetMapping
     public ResponseEntity<List<CustomerDTO>> getAllCustomers() {
         return ResponseEntity.ok(customerFacade.getAllCustomers());
     }
 
-    // ✅ Obtener un cliente por ID
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerDTO> getCustomerById(@PathVariable Long id) {
+    public ResponseEntity<CustomerDTO> getCustomerById(@PathVariable @Positive Long id) {
         return ResponseEntity.ok(customerFacade.getCustomerById(id));
     }
 
-    // ✅ Crear un nuevo cliente
     @PostMapping
-    public ResponseEntity<CustomerDTO> createCustomer(@RequestBody CustomerDTO customerDTO) {
-        if (customerDTO.getBalance() == null) {
-            throw new IllegalArgumentException("Balance cannot be null");
-        }
-
+    public ResponseEntity<CustomerDTO> createCustomer(
+            @Valid @RequestBody CustomerDTO customerDTO
+    ) {
         return ResponseEntity.ok(customerFacade.createCustomer(customerDTO));
     }
 
@@ -55,12 +50,11 @@ public class CustomerController {
         return ResponseEntity.noContent().build();
     }
 
-    //Metodo nuevo para obtener en numero de cuenta
     @GetMapping("/account/{accountNumber}")
-        public ResponseEntity<CustomerDTO> getCustomerByAccountNumber(
-        @PathVariable String accountNumber) {
-
+    public ResponseEntity<CustomerDTO> getCustomerByAccountNumber(
+            @PathVariable String accountNumber
+    ) {
         CustomerDTO customer = customerFacade.getCustomerByAccountNumber(accountNumber);
         return ResponseEntity.ok(customer);
-}
+    }
 }
