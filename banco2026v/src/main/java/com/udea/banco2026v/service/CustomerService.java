@@ -30,18 +30,17 @@ public class CustomerService {
 
     public CustomerDTO getCustomerById(Long id) {
         return customerRepository.findById(id).map(customerMapper::toDTO)
-                .orElseThrow(()-> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new NotFoundException("Cliente no encontrado"));
     }
 
-    //Servicio para encontrar el cliente a traves de su numero de cuenta
     public CustomerDTO getCustomerByAccountNumber(String accountNumber) {
-    Customer customer = customerRepository.findByAccountNumber(accountNumber)
-            .orElseThrow(() -> new NotFoundException("Account not found"));
-    return customerMapper.toDTO(customer);
+        Customer customer = customerRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new NotFoundException("Cuenta no encontrada"));
+        return customerMapper.toDTO(customer);
     }
-
 
     public CustomerDTO createCustomer(CustomerDTO customerDTO) {
+        validateAccountNumberUnique(customerDTO.getAccountNumber());
         Customer customer = customerMapper.toEntity(customerDTO);
         return customerMapper.toDTO(customerRepository.save(customer));
     }
@@ -49,7 +48,7 @@ public class CustomerService {
     @Transactional
     public CustomerDTO updateCustomer(Long id, CustomerDTO customerDTO) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Customer not found"));
+                .orElseThrow(() -> new NotFoundException("Cliente no encontrado"));
 
         validateAccountNumberUnique(customerDTO.getAccountNumber(), id);
 
@@ -65,21 +64,26 @@ public class CustomerService {
     @Transactional
     public void deleteCustomer(Long id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Customer not found"));
+                .orElseThrow(() -> new NotFoundException("Cliente no encontrado"));
 
         if (customer.getBalance() != null && customer.getBalance() > 0) {
-            throw new IllegalStateException("Cannot delete customer with positive balance");
+            throw new IllegalStateException("No se puede eliminar un cliente con saldo positivo");
         }
 
         customerRepository.delete(customer);
     }
 
+    private void validateAccountNumberUnique(String accountNumber) {
+        customerRepository.findByAccountNumber(accountNumber).ifPresent(existing -> {
+            throw new IllegalArgumentException("El número de cuenta ya está en uso");
+        });
+    }
+
     private void validateAccountNumberUnique(String accountNumber, Long currentCustomerId) {
         customerRepository.findByAccountNumber(accountNumber).ifPresent(existing -> {
             if (!existing.getId().equals(currentCustomerId)) {
-                throw new IllegalArgumentException("Account number already exists");
+                throw new IllegalArgumentException("El número de cuenta ya está en uso");
             }
         });
     }
-    
 }
