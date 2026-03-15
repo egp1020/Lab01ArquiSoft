@@ -1,0 +1,6 @@
+{
+  "senderAccountNumber": "123456",
+  "receiverAccountNumber": "654321",
+  "amount": 50000.00,
+  "idempotencyKey": "a1b2c3d4-0001-0001-0001-000000000001"
+}

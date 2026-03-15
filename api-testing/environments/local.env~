@@ -1,0 +1,4 @@
+export BASE_URL=http://localhost:8080/api
+export CUSTOMER_ID=1
+export ACCOUNT_ORIGIN=123456
+export ACCOUNT_DEST=654321

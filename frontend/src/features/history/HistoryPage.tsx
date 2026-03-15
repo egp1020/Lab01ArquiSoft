@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from 'react-router-dom';
 import { fetchTransactionsByAccount } from "../../api/transactions";
 import { ErrorNotice } from "../../components/ErrorNotice";
 import { HistorySearch } from "../../components/HistorySearch";
 import { TransactionsTable } from "../../components/TransactionsTable";
 
 export function HistoryPage() {
-  const [account, setAccount] = useState("");
-  const [searchAccount, setSearchAccount] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const presetAccount = searchParams.get('account') ?? '';
+
+  const [account, setAccount] = useState(presetAccount);
+  const [searchAccount, setSearchAccount] = useState<string | null>(presetAccount);
   const [inputError, setInputError] = useState<string | null>(null);
 
   const { data: transactions = [], isLoading, error } = useQuery({

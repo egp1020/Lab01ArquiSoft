@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../requests/customers.sh"
+BODY="${1:-$ROOT_DIR/bodies/create-customer.json}"
+customers_create "$BODY"

@@ -70,6 +70,7 @@ public class TransactionService {
         transaction.setReceiverAccountNumber(receiverAccount);
         transaction.setAmount(request.getAmount());
         transaction.setTimestamp(LocalDateTime.now());
+        transaction.setIdempotencyKey(request.getIdempotencyKey());
 
         return transactionMapper.toDTO(transactionRepository.save(transaction));
     }
